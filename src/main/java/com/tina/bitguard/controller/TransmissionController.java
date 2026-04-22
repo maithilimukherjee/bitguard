@@ -13,7 +13,7 @@ import com.tina.bitguard.service.TransmissionService;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:3000")
 
 public class TransmissionController {
 
