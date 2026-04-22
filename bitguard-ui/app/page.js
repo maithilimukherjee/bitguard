@@ -8,19 +8,43 @@ export default function Home() {
   const [errorProbability, setErrorProbability] = useState(0.2);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [visibleSteps, setVisibleSteps] = useState([]);
+  
 
   const handleTransmit = async () => {
     setLoading(true);
     setResult(null);
+    setVisibleSteps([]);
+
 
     try {
       const data = await transmitMessage(message, errorProbability);
       setResult(data);
+
+      const steps = [
+        { label: "original", value: data.original },
+        { label: "encrypted", value: data.encrypted },
+        { label: "binary", value: data.binary },
+        { label: "hamming", value: data["hamming (sent)"] },
+        { label: "received", value: data["received (corrupted)"] },
+        { label: "corrected", value: data["corrected binary"] },
+      ];
+
+      steps.forEach((step, i) => {
+        setTimeout(() => {
+          setVisibleSteps((prev) => [...prev, step]);
+
+        
+          setTimeout(() => setTyping(false), 300);
+        }, i * 600);
+      });
+
+      setTimeout(() => setLoading(false), steps.length * 600);
+
     } catch (err) {
       setResult({ error: "transmission failed" });
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -62,7 +86,18 @@ export default function Home() {
         </p>
       )}
 
-      {result && (
+      
+
+      
+      {visibleSteps.map((step, index) => (
+        <div key={index} style={styles.output}>
+          <b>{step.label}</b>
+          <pre>{step.value}</pre>
+        </div>
+      ))}
+
+      
+      {result && !loading && (
         <pre style={styles.output}>
           {JSON.stringify(result, null, 2)}
         </pre>
