@@ -9,6 +9,7 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [visibleSteps, setVisibleSteps] = useState([]);
+  const [typing, setTyping] = useState(false);
   
 
   const handleTransmit = async () => {
@@ -22,26 +23,30 @@ export default function Home() {
       setResult(data);
 
       const steps = [
-        { label: "original", value: data.original },
-        { label: "encrypted", value: data.encrypted },
-        { label: "binary", value: data.binary },
-        { label: "hamming", value: data["hamming (sent)"] },
-        { label: "received", value: data["received (corrupted)"] },
-        { label: "corrected", value: data["corrected binary"] },
-      ];
+  { label: "original", value: data.original },
+  { label: "encrypted", value: data.encrypted },
+  { label: "binary", value: data.binary },
+  { label: "hamming", value: data.hamming },
+  { label: "crc", value: data.crc },
+  { label: "received", value: data.received },
+  { label: "crc valid", value: String(data.crcValid) },
+  { label: "corrected", value: data.correctedBinary },
+];
 
-      steps.forEach((step, i) => {
-        setTimeout(() => {
-          setVisibleSteps((prev) => [...prev, step]);
-
-        
-          setTimeout(() => setTyping(false), 300);
-        }, i * 600);
-      });
+for (let i = 0; i < steps.length; i++) {
+  setTimeout(() => {
+    setVisibleSteps((prev) => {
+      const updated = [...prev];
+      updated.push(steps[i]);
+      return updated;
+    });
+  }, i * 700);
+}
 
       setTimeout(() => setLoading(false), steps.length * 600);
 
-    } catch (err) {
+    } 
+    catch (err) {
       setResult({ error: "transmission failed" });
       setLoading(false);
     }
@@ -86,22 +91,17 @@ export default function Home() {
         </p>
       )}
 
-      
-
-      
       {visibleSteps.map((step, index) => (
-        <div key={index} style={styles.output}>
-          <b>{step.label}</b>
-          <pre>{step.value}</pre>
-        </div>
-      ))}
+  <div key={index} style={styles.stepBox}>
+    <div style={styles.label}>{step.label}</div>
+    <div style={styles.value}>{step.value}</div>
+  </div>
+))}
 
       
-      {result && !loading && (
-        <pre style={styles.output}>
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
+      {result && !loading && visibleSteps.length === 0 && (
+  <pre>{JSON.stringify(result, null, 2)}</pre>
+)}
     </div>
   );
 }
@@ -123,6 +123,32 @@ const styles = {
     fontWeight: "bold",
     fontSize: "24px",
   },
+
+  stepBox: {
+  marginTop: "15px",
+  padding: "12px",
+  borderRadius: "8px",
+  background: "#111",
+  border: "1px solid #333",
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px"
+},
+
+label: {
+  fontWeight: "bold",
+  color: "#00ff88",
+  textTransform: "uppercase",
+  fontSize: "12px",
+  letterSpacing: "1px"
+},
+
+value: {
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+  color: "#0f0",
+  fontSize: "13px"
+},
 
   textarea: {
     width: "100%",

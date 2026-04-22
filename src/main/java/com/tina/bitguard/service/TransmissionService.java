@@ -1,18 +1,22 @@
 package com.tina.bitguard.service;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
 import com.tina.bitguard.model.RequestDTO;
-import com.tina.bitguard.modules.Encryptor;
 import com.tina.bitguard.modules.BinaryUtils;
-import com.tina.bitguard.modules.HammingService;
+import com.tina.bitguard.modules.CRCUtils;
+import com.tina.bitguard.modules.Encryptor;
 import com.tina.bitguard.modules.ErrorSimulator;
 import com.tina.bitguard.modules.HammingDecoder;
-import com.tina.bitguard.modules.CRCUtils;
-import org.springframework.stereotype.Service;
+import com.tina.bitguard.modules.HammingService;
 
 @Service
 public class TransmissionService {
 
-    public String process(RequestDTO request) {
+    public Map<String, Object> process(RequestDTO request) {
 
         String original = request.getMessage();
 
@@ -25,30 +29,39 @@ public class TransmissionService {
         // step 3: hamming encoding
         String hamming = applyHamming(binary);
 
+        // step 4: CRC
         String crc = CRCUtils.generateCRC(hamming.replace(" ", ""));
-String crcAppended = hamming.replace(" ", "") + crc;
+        String crcAppended = hamming.replace(" ", "") + crc;
 
-        // step 4: channel noise (ONLY ONCE)
-        String received = ErrorSimulator.injectErrors(crcAppended, request.getErrorProbability());
+        // step 5: noise injection
+        String received = ErrorSimulator.injectErrors(
+                crcAppended,
+                request.getErrorProbability()
+        );
+
         boolean isValid = CRCUtils.checkCRC(received);
 
-        // step 5: receiver decoding + correction
+        // step 6: decoding
         String correctedBinary = decodeHamming(received);
 
-        return "original: " + original + "\n" +
-       "encrypted: " + encrypted + "\n" +
-       "binary: " + binary + "\n" +
-       "hamming: " + hamming + "\n" +
-       "crc: " + crc + "\n" +
-       "received: " + received + "\n" +
-       "crc valid: " + isValid + "\n" +
-       "corrected binary: " + correctedBinary;
+        // FINAL RESPONSE (THIS FIXES YOUR UI)
+        Map<String, Object> res = new LinkedHashMap<>();
+
+        res.put("original", original);
+        res.put("encrypted", encrypted);
+        res.put("binary", binary);
+        res.put("hamming", hamming);
+        res.put("crc", crc);
+        res.put("received", received);
+        res.put("crcValid", isValid);
+        res.put("correctedBinary", correctedBinary);
+
+        return res;
     }
 
     private String applyHamming(String binary) {
 
         StringBuilder hammingEncoded = new StringBuilder();
-
         binary = binary.replace(" ", "");
 
         for (int i = 0; i < binary.length(); i += 4) {
@@ -68,7 +81,6 @@ String crcAppended = hamming.replace(" ", "") + crc;
     private String decodeHamming(String received) {
 
         StringBuilder binary = new StringBuilder();
-
         received = received.replace(" ", "");
 
         for (int i = 0; i < received.length(); i += 7) {
