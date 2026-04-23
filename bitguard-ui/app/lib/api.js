@@ -1,5 +1,5 @@
 export async function transmitMessage(message, errorProbability) {
-  const res = await fetch("http://localhost:8080/api/transmit", {
+  const res = await fetch("https://bitguard-production.up.railway.app/api/transmit", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
